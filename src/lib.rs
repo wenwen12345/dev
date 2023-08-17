@@ -23,9 +23,13 @@ pub struct App {
 #[derive(Subcommand, Debug)]
 pub enum Config {
     // encode base64
-    B64encode,
-    // decode base64
-    B64decode,
+    B64 {
+        #[clap(short = 'e', long = "encode")]
+        encode: bool,
+
+        #[clap(short = 'd', long = "decode")]
+        decode: bool,
+    },
     // weather from wttr.in
     Wttr,
 }
@@ -33,20 +37,16 @@ pub enum Config {
 impl Base64 for App {
     // need to parse before call
     fn encode(&self) {
-        if let Config::B64encode = &self.mode {
-            let bytes = general_purpose::STANDARD_NO_PAD.encode(&get_as_byte_vec());
-            write_as_byte_vec(bytes.as_bytes());
-        }
+        let bytes = general_purpose::STANDARD_NO_PAD.encode(&get_as_byte_vec());
+        write_as_byte_vec(bytes.as_bytes());
     }
     // need to parse before call
     fn decode(&self) {
-        if let Config::B64decode = &self.mode {
-            write_as_byte_vec(
-                &general_purpose::STANDARD_NO_PAD
-                    .decode(&get_as_byte_vec())
-                    .expect("the text is wrong"),
-            );
-        }
+        write_as_byte_vec(
+            &general_purpose::STANDARD_NO_PAD
+                .decode(&get_as_byte_vec())
+                .expect("the text is wrong"),
+        );
     }
 }
 
@@ -79,8 +79,9 @@ impl Wttr for App {
 impl Run for App {
     fn run(&self) {
         match &self.mode {
-            Config::B64encode => self.encode(),
-            Config::B64decode => self.decode(),
+            Config::B64 { encode: true, decode: _ } => self.encode(),
+            Config::B64 { encode: _, decode: true } => self.decode(),
+            Config::B64 { encode: false, decode: false } => unreachable!(),
             Config::Wttr => self.wttr(),
         }
     }
